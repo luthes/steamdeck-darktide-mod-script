@@ -12,13 +12,34 @@ else
     cd "$GAME_DIR" || exit 1
 fi
 
-curl -O https://cdn.discordapp.com/attachments/1048312484227973120/1079276466610634822/Darktide-Mod-Loader.zip -v || exit 1
-unzip -Bo "$GAME_DIR/Darktide-Mod-Loader.zip"
+# Check if the mod_load_order file exists, does backup before unziping the fresh files
+if [ -f "./mods/mod_load_order.txt" ]; then
+    mv ./mods/mod_load_order.txt ./mods/mod_load_order.txt.bk
+fi
 
-# This is kind of hacky, restore backed up mod_load_order file.
-mv ./tools/mod_load_order.txt.bak ./tools/mod_load_order.txt
+# Check if the zip file exists
+if [ -e "./Darktide-Mod-Loader.zip" ]; then
+    # Get md5 hash of remote_version and local_version, proceed with download if they don't match
+    remote_version=$(curl -sL https://github.com/Darktide-Mod-Framework/Darktide-Mod-Loader/releases/latest/download/Darktide-Mod-Loader.zip | md5sum)
+    local_version=$(md5sum "./Darktide-Mod-Loader.zip" )
 
-rm -rf "$GAME_DIR/modloader.zip"
+    echo $remote_version
+    echo $local_version
+    if [ "$remote_version" != "$local_version" ]; then
+        # Remove previous version of the loader
+        rm -rf "./Darktide-Mod-Loader.zip"
+        # Download the latest version of Darktide Mod Loader directly from the github
+        curl -LJOs https://github.com/Darktide-Mod-Framework/Darktide-Mod-Loader/releases/latest/download/Darktide-Mod-Loader.zip
+        # This will update files and create non-existente ones, but not overwrite files that match existing ones
+        unzip -uo "./Darktide-Mod-Loader.zip"
+    fi
+else
+    # Download the latest version of Darktide Mod Loader directly from the github
+    curl -LJOs https://github.com/Darktide-Mod-Framework/Darktide-Mod-Loader/releases/latest/download/Darktide-Mod-Loader.zip
+    # This will update files and create non-existente ones, but not overwrite files that match existing ones
+    unzip -uo "./Darktide-Mod-Loader.zip"
+fi
+
 
 ## Run Windows Exe in Proton Path
 
