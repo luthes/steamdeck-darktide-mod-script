@@ -12,13 +12,22 @@ else
     cd "$GAME_DIR" || exit 1
 fi
 
-curl -O https://cdn.discordapp.com/attachments/1048312484227973120/1079276466610634822/Darktide-Mod-Loader.zip -v || exit 1
-unzip -Bo "$GAME_DIR/Darktide-Mod-Loader.zip"
+# Check if the mod_load_order file exists, does backup before unziping the fresh files
+if [ -f "./mods/mod_load_order.txt" ]; then
+    mv ./mods/mod_load_order.txt ./mods/mod_load_order.txt.bk
+fi
+
+# Download the latest version of Darktide Mod Loader directly from the github
+# Instead of removing the zip after extracting, wget will only download the zip again if it's different from current one
+# This way we have a local copy just in case and don't have to download a new one each time
+# (if the name of the zip changes in the future, something could be done to make it more dynamic, but won't bother with that for now)
+wget -v -N https://github.com/Darktide-Mod-Framework/Darktide-Mod-Loader/releases/latest/download/Darktide-Mod-Loader.zip
+
+# This will update files and create non-existente ones, but not overwrite files that match existing ones
+unzip -uo "$GAME_DIR/Darktide-Mod-Loader.zip"
 
 # This is kind of hacky, restore backed up mod_load_order file.
-mv ./tools/mod_load_order.txt.bak ./tools/mod_load_order.txt
-
-rm -rf "$GAME_DIR/modloader.zip"
+mv ./mods/mod_load_order.txt.bk ./mods/mod_load_order.txt
 
 ## Run Windows Exe in Proton Path
 
@@ -30,3 +39,4 @@ STEAM_COMPAT_DATA_PATH="$HOME/.local/share/Steam/steamapps/compatdata/$APP_ID" \
 STEAM_COMPAT_DATA_PATH="$HOME/.local/share/Steam/steamapps/compatdata/$APP_ID" \
     STEAM_COMPAT_CLIENT_INSTALL_PATH="$HOME/.local/share/Steam" \
     python "$HOME/.local/share/Steam/compatibilitytools.d/$PROTON_VERSION/proton" run ./tools/dtkit-patch.exe --patch ./bundle/ > /dev/null 2>&1
+
