@@ -40,6 +40,8 @@ else
     unzip -uo "./Darktide-Mod-Loader.zip"
 fi
 
+# Restore mod_load_order backup
+mv ./mods/mod_load_order.txt.bk ./mods/mod_load_order.txt
 
 ## Run Windows Exe in Proton Path
 
